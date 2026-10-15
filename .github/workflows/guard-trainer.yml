@@ -1,0 +1,34 @@
+# *******************************************************************************
+# Copyright (c) 2026 Qorix GmbH
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+# The trainer branch holds the solutions of the onboarding training. It must never reach main:
+# every trainee repository is copied from main. This check fails any pull request that would
+# bring trainer material along, so that a required status check blocks the merge.
+name: Guard trainer material
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  no-trainer-material:
+    name: 🛡️ No trainer material
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out
+        uses: actions/checkout@v7
+      - name: 🛡️ Fail if trainer/ is part of the result
+        run: |
+          if [ -n "$(git ls-files trainer/)" ]; then
+            echo "::error::This pull request brings trainer/ into the repository. The trainer branch holds the solutions and must never be merged."
+            git ls-files trainer/
+            exit 1
+          fi
+          echo "No trainer material."
